@@ -1,0 +1,65 @@
+---
+title: "Ch4 Excercises"
+output: html_notebook
+---
+
+```{r}
+library(ISLR2)
+library(corrplot)
+library(MASS)
+library(class)
+pairs(Weekly)
+```
+```{r}
+plot(Year~Volume, data = Weekly)
+```
+
+```{r}
+corrplot(cor(Weekly[,-9]))
+```
+Year and Volume variables seem to be linearly related. 
+
+```{r}
+glm.fit <- glm(Direction ~ Lag1 + Lag2 + Lag3 + Lag4 + Lag5, family = "binomial", data = Weekly)
+summary(glm.fit)
+```
+Lag2 is statistically significant at $\alpha = 0.05
+
+```{r}
+probs <- predict(glm.fit, type = "response")
+pred <- rep("Down", length(probs))
+pred[probs > 0.5] <- "Up"
+table(pred, Weekly$Direction)
+mean(pred == Weekly$Direction)
+```
+The model predicted the correct directions of the stock market 56.29% of the time. The model predicted 93.22% of the Up values correctly. It predicted only 10.12% of the Down values correctly
+```{r}
+attach(Weekly)
+train <- Weekly[Year < 2009,]
+test <- Weekly[Year > 2008,]
+glm.fit <- glm(Direction ~ Lag2, data = train, family = "binomial")
+probs <- predict(glm.fit, type = "response", newdata = test)
+pred <- rep("Down", length(probs))
+pred[probs > 0.5] <- "Up"
+table(pred, test$Direction)
+mean(pred !=test$Direction)
+```
+The model predicted the correct directions 62.5% on the test set. 
+
+```{r}
+lda.fit <- lda(Direction ~ Lag2, data = train)
+pred <- predict(lda.fit, newdata = test, type = "response")
+table(pred$class, test$Direction)
+mean(pred$class != test$Direction)
+```
+The LDA model has the same test error rate as the logistic regression model at 37.5%. 
+
+```{r}
+qda.fit <- qda(Direction ~ Lag2, data = train)
+pred <- predict(qda.fit, newdata = test, type = "response")
+table(pred$class, test$Direction)
+mean(pred$class != test$Direction)
+```
+The QDA model performs poorer than LDA with a test error rate of 41.35%. 
+
+
