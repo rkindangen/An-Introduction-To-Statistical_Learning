@@ -1,0 +1,70 @@
+---
+title: "Chapter 6 Notebook"
+output: html_notebook
+---
+
+```{r}
+library(ISLR2)
+library(glmnet)
+set.seed(1)
+train <- sample(nrow(College), .70*nrow(College))
+train.College <- College[train,]
+test.College <- College[-train,]
+#Fit linear regression 
+lm.fit <- lm(Apps ~ ., data = train.College)
+lm.pred <- predict(lm.fit, newdata = test.College)
+mean((lm.pred - test.College$Apps)^2)
+```
+MSE of the linear regression model is: 1,261,630
+```{r}
+set.seed(213)
+#Creating matrices for train and test data
+train.Matrix <-model.matrix(Apps ~ ., data = train.College)
+test.Matrix <- model.matrix(Apps ~ ., data = test.College)
+
+#Creating values for lambda
+grid <- 10^seq(10, -2, length=100)
+
+#Fitting ridge regression
+ridge.fit <- glmnet(train.Matrix, train.College$Apps, alpha = 0, lambda = grid, thresh = 1e-12)
+
+#Cross validating model
+cv.out <- cv.glmnet(train.Matrix, train.College$Apps, alpha = 0)
+plot(cv.out)
+bestlam.ridge <- cv.out$lambda.min
+```
+
+```{r}
+ridge.pred <- predict(ridge.fit, s = bestlam.ridge, test.Matrix)
+mean((ridge.pred - test.College$Apps)^2)
+```
+MSE of ridge regression is: 1,120,589
+The model performs slightly better than linear regression.
+
+```{r}
+set.seed(2)
+
+#Fitting lasso regression
+lasso.fit <- glmnet(train.Matrix, train.College$Apps, alpha = 1, lambda = grid, thresh = 1e-12)
+
+#Cross validating model
+cv.out <- cv.glmnet(train.Matrix, train.College$Apps, alpha = 1)
+plot(cv.out)
+bestlam.lasso <- cv.out$lambda.min
+```
+```{r}
+lasso.pred <- predict(lasso.fit, s = bestlam.lasso, test.Matrix)
+mean((lasso.pred - test.College$Apps)^2)
+```
+MSE of lasso regression is: 1,254,720. This model performs worse than the ridge regression. 
+
+```{r}
+ridge.coef <- predict(ridge.fit, s = bestlam.ridge, type = "coefficients")[1:19,]
+ridge.coef[ridge.coef != 0]
+```
+
+```{r}
+#PCR
+```
+
+
